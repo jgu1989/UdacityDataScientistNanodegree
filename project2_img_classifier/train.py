@@ -1,5 +1,5 @@
-# Imports here
 import matplotlib.pyplot as plt
+from collections import OrderedDict
 import numpy as np
 import torch
 from torch import optim
@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from torchvision import datasets, transforms, models
 from PIL import Image
 import argparse
-import load
+from load import load_data
 
 
 
@@ -41,6 +41,7 @@ def do_deep_learning(model, trainloader, epochs, print_every, criterion, optimiz
                       "Loss: {:.4f}".format(running_loss / print_every))
 
                 running_loss = 0
+    return model
 
 def check_accuracy_on_test(model, testloader, device):
     model.to(device)
@@ -58,36 +59,34 @@ def check_accuracy_on_test(model, testloader, device):
 
     print('Accuracy of the network on the 10000 test images: %d %%' % (100 * correct / total))
 
-def save_checkpoint(model):
+def save_checkpoint(model, save_dir):
     model.class_to_idx = dataloaders['train'].dataset.class_to_idx
     checkpoint = {'input_size': [3, 224, 224],
                   'output_size': 102,
                   'state_dict': model.state_dict(),
-                  'class_to_idx': model.class_to_idx,
-                  'num_epochs': 3}
-    torch.save(checkpoint, 'checkpoint.pth')
+                  'class_to_idx': model.class_to_idx}
+    torch.save(checkpoint, save_dir)
 
 
 
 
-# parser = argparse.ArgumentParser(description='Train image classifier')
-# parser.add_argument('--save_dir', type=str,  required=True, help='Directory to save checkpoint')
-# parser.add_argument('--arch', type=str, required=True, help='Architecture')
-# parser.add_argument('--learning_rate', type=float, required=True, help='Learning rate')
-# parser.add_argument('--hidden_units')
-# parser.add_argument('--epochs', type=int,  required=True, help='Number of epochs')
-# parser.add_mutually_exclusive_group().add_argument('--gpu', action='store_true', help='Use GPU')
-#
-# args = parser.parse_args()
+parser = argparse.ArgumentParser(description='Train image classifier')
+parser.add_argument('--save_dir', type=str,  default='checkpoint.pth', help='Directory to save checkpoint')
+parser.add_argument('--arch', type=str, default='densenet121', help='Architecture')
+parser.add_argument('--learning_rate', type=float, default=0.001, help='Learning rate')
+parser.add_argument('--hidden_units', type=int, default=500, help='Number of hidden units')
+parser.add_argument('--epochs', type=int,  default=10, help='Number of epochs')
+parser.add_mutually_exclusive_group().add_argument('--gpu', action='store_true', help='Use GPU')
 
-dataloaders = load.load_data('flowers')
+args = parser.parse_args()
+
+dataloaders = load_data('flowers')
 
 model = models.densenet121(pretrained=True)
 
 for param in model.parameters():
     param.requires_grad = False
 
-from collections import OrderedDict
 
 classifier = nn.Sequential(OrderedDict([
     ('fc1', nn.Linear(1024, 500)),
@@ -100,5 +99,8 @@ model.classifier = classifier
 criterion = nn.NLLLoss()
 optimizer = optim.Adam(model.classifier.parameters(), lr=0.001)
 
-do_deep_learning(model, dataloaders['train'], 10, 100, criterion, optimizer, 'cuda')
-check_accuracy_on_test(model, dataloaders['test'],'cuda')
+model = do_deep_learning(model, dataloaders['train'], 10, 1, criterion, optimizer, 'cpu')
+# check_accuracy_on_test(model, dataloaders['test'],'cpu')
+
+save_dir = 'checkpoint.pth'
+save_checkpoint(model, save_dir)
