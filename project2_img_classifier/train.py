@@ -104,7 +104,7 @@ if args.gpu:
 else:
     device = 'cpu'
 model = do_deep_learning(model, dataloaders['train'], args.epochs, 1, criterion, optimizer, device)
-# check_accuracy_on_test(model, dataloaders['test'],'cpu')
+check_accuracy_on_test(model, dataloaders['test'],'cpu')
 
 save_dir = args.save_dir
 save_checkpoint(model, save_dir)
