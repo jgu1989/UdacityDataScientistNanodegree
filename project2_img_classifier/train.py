@@ -89,18 +89,22 @@ for param in model.parameters():
 
 
 classifier = nn.Sequential(OrderedDict([
-    ('fc1', nn.Linear(1024, 500)),
+    ('fc1', nn.Linear(1024, args.hidden_units)),
     ('relu', nn.ReLU()),
-    ('fc2', nn.Linear(500, 102)),
+    ('fc2', nn.Linear(args.hidden_units, 102)),
     ('output', nn.LogSoftmax(dim=1))
 ]))
 
 model.classifier = classifier
 criterion = nn.NLLLoss()
-optimizer = optim.Adam(model.classifier.parameters(), lr=0.001)
+optimizer = optim.Adam(model.classifier.parameters(), lr=args.learning_rate)
 
-model = do_deep_learning(model, dataloaders['train'], 10, 1, criterion, optimizer, 'cpu')
+if args.gpu:
+    device = 'cuda'
+else:
+    device = 'cpu'
+model = do_deep_learning(model, dataloaders['train'], args.epochs, 1, criterion, optimizer, device)
 # check_accuracy_on_test(model, dataloaders['test'],'cpu')
 
-save_dir = 'checkpoint.pth'
+save_dir = args.save_dir
 save_checkpoint(model, save_dir)
