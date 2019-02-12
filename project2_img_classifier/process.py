@@ -1,3 +1,5 @@
+import numpy as np
+from PIL import Image
 def process_image(image):
     ''' Scales, crops, and normalizes a PIL image for a PyTorch model,
         returns an Numpy array
