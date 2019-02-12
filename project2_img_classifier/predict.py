@@ -48,12 +48,12 @@ def predict(image_path, model, topk, device):
     probs = torch.nn.functional.softmax(outputs.data)
     return probs.topk(topk)
 
-def plot(image_path, cat_to_name, device = 'cpu'):
+def plot(image_path, cat_to_name, topk, device = 'cpu'):
     # image_path = 'flowers/test/28/image_05230.jpg'
     # image_path = 'flowers/test/1/image_06743.jpg'
 
     im = Image.open(image_path)
-    probs, idx = predict(image_path, model, 5, device)
+    probs, idx = predict(image_path, model, topk, device)
     idx_to_class = {v: k for k, v in class_to_idx.items()}
     top_class = [idx_to_class[x] for x in idx.tolist()[0]]
     names = [cat_to_name[k] for k in top_class]
@@ -66,21 +66,25 @@ def plot(image_path, cat_to_name, device = 'cpu'):
     ax2.barh(names, probs.tolist()[0])
 
 parser = argparse.ArgumentParser(description='Predict the class')
-parser.add_argument('input', type=str, metavar='', help='Path of image')
-parser.add_argument('chp', type=str, metavar='', help='Path of checkpoint')
-parser.add_argument('--top_k', type=int, metavar='', required=True, help='Top K most likely classes')
-parser.add_argument('--category_names', type=str, metavar='', help='Use a mapping of categories to real names')
-parser.add_argument('--gpu', metavar='', help='Use GPU')
+parser.add_argument('--input', type=str, metavar='', default='flowers/test/28/image_05230.jpg', help='Path of image')
+parser.add_argument('--chp', type=str, metavar='', default='checkpoint.pth', help='Path of checkpoint')
+parser.add_argument('--top_k', type=int, metavar='', default=5, help='Top K most likely classes')
+parser.add_argument('--category_names', type=str, metavar='', default='cat_to_name.json', help='Use a mapping of categories to real names')
+parser.add_mutually_exclusive_group().add_argument('--gpu', action='store_true', help='Use GPU')
 
 args = parser.parse_args()
 
 
 # load model
-model, class_to_idx = load_model('checkpoint.pth')
+model, class_to_idx = load_model(args.chp)
 
 
 # make predictions
-with open('cat_to_name.json', 'r') as f:
+with open(args.category_names, 'r') as f:
     cat_to_name = json.load(f)
-image_path = 'flowers/test/28/image_05230.jpg'
-plot(image_path, cat_to_name, 'cuda')
+image_path = args.input
+if args.gpu:
+    device = 'cuda'
+else:
+    device = 'cpu'
+plot(image_path, cat_to_name, args.top_k, device)
