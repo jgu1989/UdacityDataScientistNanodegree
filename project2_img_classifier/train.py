@@ -37,9 +37,25 @@ def do_deep_learning(model, trainloader, epochs, print_every, criterion, optimiz
             running_loss += loss.item()
 
             if steps % print_every == 0:
-                print("Epoch: {}/{}... ".format(e + 1, epochs),
-                      "Loss: {:.4f}".format(running_loss / print_every))
+                model.eval()
+                val_loss = 0
+                correct = 0
+                with torch.no_grad():
+                    for images, labels in dataloaders['valid']:
+                        images, labels = images.to(device), labels.to(device)
+                        outputs =  model(images)
+                        loss = criterion(outputs, labels)
+                        val_loss +=loss.item()
 
+                        _, predicted = torch.max(outputs.data, 1)
+                        correct += (predicted == labels).sum().item()
+
+                print("Epoch: {}/{}... ".format(e+1, epochs),
+                      "Loss: {:.4f}".format(running_loss/print_every),
+                      "Val loss: {:.4f}".format(val_loss/len(image_datasets['valid'])),
+                      "Val accuracy: {:.2f}".format(correct/len(image_datasets['valid'])))
+
+                model.train()
                 running_loss = 0
     return model
 
@@ -84,7 +100,7 @@ dataloaders = load_data('flowers')
 
 if args.arch == 'densenet121':
     model = models.densenet121(pretrained=True)
-elif args.arch == 'vgg':
+elif args.arch == 'vgg': 
     model = models.vgg16(pretrained=True)
 else:
     print("Supported archs: vgg, densenet.")
@@ -109,7 +125,6 @@ if args.gpu:
     device = 'cuda'
 else:
     device = 'cpu'
-
 model = do_deep_learning(model, dataloaders['train'], args.epochs, 100, criterion, optimizer, device)
 check_accuracy_on_test(model, dataloaders['test'],device)
 
