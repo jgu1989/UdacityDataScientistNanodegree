@@ -82,7 +82,13 @@ args = parser.parse_args()
 
 dataloaders = load_data('flowers')
 
-model = models.densenet121(pretrained=True)
+if args.arch == 'densenet121':
+    model = models.densenet121(pretrained=True)
+elif args.arch == 'vgg':
+    model = models.vgg16(pretrained=True)
+else:
+    print("Supported archs: vgg, densenet.")
+
 
 for param in model.parameters():
     param.requires_grad = False
@@ -103,8 +109,9 @@ if args.gpu:
     device = 'cuda'
 else:
     device = 'cpu'
-model = do_deep_learning(model, dataloaders['train'], args.epochs, 1, criterion, optimizer, device)
-check_accuracy_on_test(model, dataloaders['test'],'cpu')
+
+model = do_deep_learning(model, dataloaders['train'], args.epochs, 100, criterion, optimizer, device)
+check_accuracy_on_test(model, dataloaders['test'],device)
 
 save_dir = args.save_dir
 save_checkpoint(model, save_dir)

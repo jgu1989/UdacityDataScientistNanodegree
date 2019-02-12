@@ -18,7 +18,7 @@ def load_model(path):
     checkpoint = torch.load(path)
 #     checkpoint = torch.load(path, map_location=lambda storage, loc: storage)
     model = models.densenet121()
-    print(model)
+    # print(model)
     classifier = nn.Sequential(OrderedDict([
         ('fc1', nn.Linear(1024, 500)),
         ('relu', nn.ReLU()),
