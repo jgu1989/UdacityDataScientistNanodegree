@@ -36,4 +36,4 @@ def load_data(data_dir):
     dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=32,
                                                  shuffle=True)
                   for x in ['train', 'valid', 'test']}
-    return dataloaders
+    return image_datasets, dataloaders
